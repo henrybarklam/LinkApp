@@ -7,15 +7,22 @@ admin.initializeApp();
 const express = require('express');
 const app = express();
 
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-exports.helloWorld = functions.https.onRequest((request, response) => {
-  functions.logger.info("Hello logs!", {structuredData: true});
-  response.send("Hello from Firebase!");
-});
+const firebaseConfig = {
+    apiKey: "AIzaSyAeSju1jgoDnSOp3YL2WEG-cOhUyjpN-Wo",
+    authDomain: "linkapp-3.firebaseapp.com",
+    projectId: "linkapp-3",
+    storageBucket: "linkapp-3.appspot.com",
+    messagingSenderId: "570683270186",
+    appId: "1:570683270186:web:7f646c668d52340de90f53",
+    measurementId: "G-TSPKTQGRNH"
+  };
+  
 
-exports.getLinks = functions.https.onRequest((req,res) => {
+const firebase = require('firebase');
+firebase.initializeApp(firebaseConfig);
+
+
+app.get('/links', (req, res) =>{
     admin.firestore()
     .collection('links')
     .get()
@@ -27,15 +34,14 @@ exports.getLinks = functions.https.onRequest((req,res) => {
         return res.json(links);
     })
     .catch((err) => console.error(err));
-});
+})
 
 
-exports.createLinks = functions.https.onRequest((req, res) => {
-
+app.post('/scream', (req, res) => {
     const newLink = {
         body: req.body.body,
         userHandle: req.body.userHandle,
-        createdAt: admin.firestore.Timestamp.fromDate(new Date())
+        createdAt: new Date.toISOString()
     };
 
     admin.firestore()
@@ -50,3 +56,26 @@ exports.createLinks = functions.https.onRequest((req, res) => {
     });
 
 });
+
+
+//Signup route
+
+app.post('/signup', (req, res) => {
+    const newUser ={
+        email : req.body.email,
+        password: req.body.password,
+        confirmPassword: req.body.confirmPassword,
+        handle: req.body.handle,
+    };
+
+firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password)
+    .then((data) => {
+        return res.status(201).json({
+            message: `user ${data.user.uid} signed up successfully`});
+    })
+    .catch(err => {
+        console.error(err);
+        return res.status(500).json({ error: err.code});
+    });
+});
+exports.api = functions.https.onRequest(app);
